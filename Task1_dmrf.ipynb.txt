@@ -1,0 +1,745 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Ryzhikova/python-first-part/blob/main/Task1_dmrf.ipynb)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "toc": true
+   },
+   "source": [
+    "<h1>Table of Contents<span class=\"tocSkip\"></span></h1>\n",
+    "<div class=\"toc\"><ul class=\"toc-item\"><li><span><a href=\"#Задание\" data-toc-modified-id=\"Задание-1\"><span class=\"toc-item-num\">1&nbsp;&nbsp;</span>Задание</a></span></li><li><span><a href=\"#Задание-*\" data-toc-modified-id=\"Задание-*-2\"><span class=\"toc-item-num\">2&nbsp;&nbsp;</span>Задание *</a></span><ul class=\"toc-item\"><li><span><a href=\"#Список-объектов\" data-toc-modified-id=\"Список-объектов-2.1\"><span class=\"toc-item-num\">2.1&nbsp;&nbsp;</span>Список объектов</a></span></li></ul></li><li><span><a href=\"#Данные-по-определенному-объекту\" data-toc-modified-id=\"Данные-по-определенному-объекту-3\"><span class=\"toc-item-num\">3&nbsp;&nbsp;</span>Данные по определенному объекту</a></span><ul class=\"toc-item\"><li><span><a href=\"#Cохранение-информации-в-pandas-dataframe\" data-toc-modified-id=\"Cохранение-информации-в-pandas-dataframe-3.1\"><span class=\"toc-item-num\">3.1&nbsp;&nbsp;</span>Cохранение информации в pandas dataframe</a></span></li><li><span><a href=\"#Сохранение-pandas-dataframe-в-excel\" data-toc-modified-id=\"Сохранение-pandas-dataframe-в-excel-3.2\"><span class=\"toc-item-num\">3.2&nbsp;&nbsp;</span>Сохранение pandas dataframe в excel</a></span></li><li><span><a href=\"#Сохранение-pandas-dataframe-в-pickle\" data-toc-modified-id=\"Сохранение-pandas-dataframe-в-pickle-3.3\"><span class=\"toc-item-num\">3.3&nbsp;&nbsp;</span>Сохранение pandas dataframe в pickle</a></span></li><li><span><a href=\"#Сохранение-pandas-dataframe-в-БД\" data-toc-modified-id=\"Сохранение-pandas-dataframe-в-БД-3.4\"><span class=\"toc-item-num\">3.4&nbsp;&nbsp;</span>Сохранение pandas dataframe в БД</a></span></li></ul></li></ul></div>"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "pycharm": {
+     "name": "#%% md\n"
+    }
+   },
+   "source": [
+    "# Задание\n",
+    "* Собрать информацию о всех строящихся объектах на сайте \"наш.дом.рф\"\n",
+    "* Cохранить ее в pandas dataframe\n",
+    "* Cохранить pandas dataframe в excel\n",
+    "* Cохранить pandas dataframe в pickle\n",
+    "* Cохранить pandas dataframe в БД\n",
+    "\n",
+    "# Задание *\n",
+    "* Написать скрипт, который скачивает фотографии всех строящихся объектов с сайта \"наш.дом.рф\"\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "pycharm": {
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "import requests"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "pycharm": {
+     "name": "#%% md\n"
+    }
+   },
+   "source": [
+    "## Список объектов"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {
+    "pycharm": {
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "offset_ = 0\n",
+    "limit_ = 100\n",
+    "objids = []\n",
+    "\n",
+    "while offset_<10527:\n",
+    "    url = f'https://xn--80az8a.xn--d1aqf.xn--p1ai/%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D1%8B/api/kn/object?offset={offset_}&limit={limit_}&sortField=devId.devShortCleanNm&sortType=asc&objStatus=0'\n",
+    "    res = requests.get(url)\n",
+    "    objects_data = res.json()\n",
+    "    objects_list = objects_data.get('data').get('list')\n",
+    "    objids = objids + [x.get('objId') for x in objects_list]\n",
+    "    offset_ = offset_ + limit_"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "10527"
+      ]
+     },
+     "execution_count": 35,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "len(objids)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "pycharm": {
+     "name": "#%% md\n"
+    }
+   },
+   "source": [
+    "# Данные по определенному объекту"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Cохранение информации в pandas dataframe"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 72,
+   "metadata": {
+    "pycharm": {
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [
+    {
+     "ename": "ConnectionError",
+     "evalue": "HTTPSConnectionPool(host='xn--80az8a.xn--d1aqf.xn--p1ai', port=443): Max retries exceeded with url: /%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D1%8B/api/object/43551 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x0000023FE7468670>: Failed to establish a new connection: [WinError 10060] Попытка установить соединение была безуспешной, т.к. от другого компьютера за требуемое время не получен нужный отклик, или было разорвано уже установленное соединение из-за неверного отклика уже подключенного компьютера'))",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[1;31mTimeoutError\u001b[0m                              Traceback (most recent call last)",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\urllib3\\connection.py\u001b[0m in \u001b[0;36m_new_conn\u001b[1;34m(self)\u001b[0m\n\u001b[0;32m    173\u001b[0m         \u001b[1;32mtry\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 174\u001b[1;33m             conn = connection.create_connection(\n\u001b[0m\u001b[0;32m    175\u001b[0m                 \u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0m_dns_host\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mport\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mtimeout\u001b[0m\u001b[1;33m,\u001b[0m \u001b[1;33m**\u001b[0m\u001b[0mextra_kw\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\urllib3\\util\\connection.py\u001b[0m in \u001b[0;36mcreate_connection\u001b[1;34m(address, timeout, source_address, socket_options)\u001b[0m\n\u001b[0;32m     95\u001b[0m     \u001b[1;32mif\u001b[0m \u001b[0merr\u001b[0m \u001b[1;32mis\u001b[0m \u001b[1;32mnot\u001b[0m \u001b[1;32mNone\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m---> 96\u001b[1;33m         \u001b[1;32mraise\u001b[0m \u001b[0merr\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m     97\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\urllib3\\util\\connection.py\u001b[0m in \u001b[0;36mcreate_connection\u001b[1;34m(address, timeout, source_address, socket_options)\u001b[0m\n\u001b[0;32m     85\u001b[0m                 \u001b[0msock\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mbind\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0msource_address\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m---> 86\u001b[1;33m             \u001b[0msock\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mconnect\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0msa\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m     87\u001b[0m             \u001b[1;32mreturn\u001b[0m \u001b[0msock\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;31mTimeoutError\u001b[0m: [WinError 10060] Попытка установить соединение была безуспешной, т.к. от другого компьютера за требуемое время не получен нужный отклик, или было разорвано уже установленное соединение из-за неверного отклика уже подключенного компьютера",
+      "\nDuring handling of the above exception, another exception occurred:\n",
+      "\u001b[1;31mNewConnectionError\u001b[0m                        Traceback (most recent call last)",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\urllib3\\connectionpool.py\u001b[0m in \u001b[0;36murlopen\u001b[1;34m(self, method, url, body, headers, retries, redirect, assert_same_host, timeout, pool_timeout, release_conn, chunked, body_pos, **response_kw)\u001b[0m\n\u001b[0;32m    698\u001b[0m             \u001b[1;31m# Make the request on the httplib connection object.\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 699\u001b[1;33m             httplib_response = self._make_request(\n\u001b[0m\u001b[0;32m    700\u001b[0m                 \u001b[0mconn\u001b[0m\u001b[1;33m,\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\urllib3\\connectionpool.py\u001b[0m in \u001b[0;36m_make_request\u001b[1;34m(self, conn, method, url, timeout, chunked, **httplib_request_kw)\u001b[0m\n\u001b[0;32m    381\u001b[0m         \u001b[1;32mtry\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 382\u001b[1;33m             \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0m_validate_conn\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mconn\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    383\u001b[0m         \u001b[1;32mexcept\u001b[0m \u001b[1;33m(\u001b[0m\u001b[0mSocketTimeout\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mBaseSSLError\u001b[0m\u001b[1;33m)\u001b[0m \u001b[1;32mas\u001b[0m \u001b[0me\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\urllib3\\connectionpool.py\u001b[0m in \u001b[0;36m_validate_conn\u001b[1;34m(self, conn)\u001b[0m\n\u001b[0;32m   1009\u001b[0m         \u001b[1;32mif\u001b[0m \u001b[1;32mnot\u001b[0m \u001b[0mgetattr\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mconn\u001b[0m\u001b[1;33m,\u001b[0m \u001b[1;34m\"sock\"\u001b[0m\u001b[1;33m,\u001b[0m \u001b[1;32mNone\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m:\u001b[0m  \u001b[1;31m# AppEngine might not have  `.sock`\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m-> 1010\u001b[1;33m             \u001b[0mconn\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mconnect\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m   1011\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\urllib3\\connection.py\u001b[0m in \u001b[0;36mconnect\u001b[1;34m(self)\u001b[0m\n\u001b[0;32m    357\u001b[0m         \u001b[1;31m# Add certificate verification\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 358\u001b[1;33m         \u001b[0mconn\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0m_new_conn\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    359\u001b[0m         \u001b[0mhostname\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mhost\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\urllib3\\connection.py\u001b[0m in \u001b[0;36m_new_conn\u001b[1;34m(self)\u001b[0m\n\u001b[0;32m    185\u001b[0m         \u001b[1;32mexcept\u001b[0m \u001b[0mSocketError\u001b[0m \u001b[1;32mas\u001b[0m \u001b[0me\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 186\u001b[1;33m             raise NewConnectionError(\n\u001b[0m\u001b[0;32m    187\u001b[0m                 \u001b[0mself\u001b[0m\u001b[1;33m,\u001b[0m \u001b[1;34m\"Failed to establish a new connection: %s\"\u001b[0m \u001b[1;33m%\u001b[0m \u001b[0me\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;31mNewConnectionError\u001b[0m: <urllib3.connection.HTTPSConnection object at 0x0000023FE7468670>: Failed to establish a new connection: [WinError 10060] Попытка установить соединение была безуспешной, т.к. от другого компьютера за требуемое время не получен нужный отклик, или было разорвано уже установленное соединение из-за неверного отклика уже подключенного компьютера",
+      "\nDuring handling of the above exception, another exception occurred:\n",
+      "\u001b[1;31mMaxRetryError\u001b[0m                             Traceback (most recent call last)",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\requests\\adapters.py\u001b[0m in \u001b[0;36msend\u001b[1;34m(self, request, stream, timeout, verify, cert, proxies)\u001b[0m\n\u001b[0;32m    438\u001b[0m             \u001b[1;32mif\u001b[0m \u001b[1;32mnot\u001b[0m \u001b[0mchunked\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 439\u001b[1;33m                 resp = conn.urlopen(\n\u001b[0m\u001b[0;32m    440\u001b[0m                     \u001b[0mmethod\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0mrequest\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mmethod\u001b[0m\u001b[1;33m,\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\urllib3\\connectionpool.py\u001b[0m in \u001b[0;36murlopen\u001b[1;34m(self, method, url, body, headers, retries, redirect, assert_same_host, timeout, pool_timeout, release_conn, chunked, body_pos, **response_kw)\u001b[0m\n\u001b[0;32m    754\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 755\u001b[1;33m             retries = retries.increment(\n\u001b[0m\u001b[0;32m    756\u001b[0m                 \u001b[0mmethod\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0murl\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0merror\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0me\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0m_pool\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0m_stacktrace\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0msys\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mexc_info\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m[\u001b[0m\u001b[1;36m2\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\urllib3\\util\\retry.py\u001b[0m in \u001b[0;36mincrement\u001b[1;34m(self, method, url, response, error, _pool, _stacktrace)\u001b[0m\n\u001b[0;32m    573\u001b[0m         \u001b[1;32mif\u001b[0m \u001b[0mnew_retry\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mis_exhausted\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 574\u001b[1;33m             \u001b[1;32mraise\u001b[0m \u001b[0mMaxRetryError\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0m_pool\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0murl\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0merror\u001b[0m \u001b[1;32mor\u001b[0m \u001b[0mResponseError\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mcause\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    575\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;31mMaxRetryError\u001b[0m: HTTPSConnectionPool(host='xn--80az8a.xn--d1aqf.xn--p1ai', port=443): Max retries exceeded with url: /%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D1%8B/api/object/43551 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x0000023FE7468670>: Failed to establish a new connection: [WinError 10060] Попытка установить соединение была безуспешной, т.к. от другого компьютера за требуемое время не получен нужный отклик, или было разорвано уже установленное соединение из-за неверного отклика уже подключенного компьютера'))",
+      "\nDuring handling of the above exception, another exception occurred:\n",
+      "\u001b[1;31mConnectionError\u001b[0m                           Traceback (most recent call last)",
+      "\u001b[1;32m~\\AppData\\Local\\Temp/ipykernel_13600/2585109610.py\u001b[0m in \u001b[0;36m<module>\u001b[1;34m\u001b[0m\n\u001b[0;32m      7\u001b[0m     \u001b[1;32mfor\u001b[0m \u001b[0mobj\u001b[0m \u001b[1;32min\u001b[0m \u001b[0mobjids\u001b[0m\u001b[1;33m[\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mi\u001b[0m\u001b[1;33m+\u001b[0m\u001b[1;36m1\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mi\u001b[0m\u001b[1;33m+\u001b[0m\u001b[1;36m1000\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      8\u001b[0m         \u001b[0murl\u001b[0m \u001b[1;33m=\u001b[0m \u001b[1;34mf'https://xn--80az8a.xn--d1aqf.xn--p1ai/%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D1%8B/api/object/{obj}'\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m----> 9\u001b[1;33m         \u001b[0mres\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mrequests\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mget\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0murl\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mjson\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m     10\u001b[0m         \u001b[0mdf\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mpd\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mjson_normalize\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mres\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m     11\u001b[0m         \u001b[0mdata\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mdata\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mappend\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mdf\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\requests\\api.py\u001b[0m in \u001b[0;36mget\u001b[1;34m(url, params, **kwargs)\u001b[0m\n\u001b[0;32m     73\u001b[0m     \"\"\"\n\u001b[0;32m     74\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m---> 75\u001b[1;33m     \u001b[1;32mreturn\u001b[0m \u001b[0mrequest\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;34m'get'\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0murl\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mparams\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0mparams\u001b[0m\u001b[1;33m,\u001b[0m \u001b[1;33m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m     76\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m     77\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\requests\\api.py\u001b[0m in \u001b[0;36mrequest\u001b[1;34m(method, url, **kwargs)\u001b[0m\n\u001b[0;32m     59\u001b[0m     \u001b[1;31m# cases, and look like a memory leak in others.\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m     60\u001b[0m     \u001b[1;32mwith\u001b[0m \u001b[0msessions\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mSession\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m \u001b[1;32mas\u001b[0m \u001b[0msession\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m---> 61\u001b[1;33m         \u001b[1;32mreturn\u001b[0m \u001b[0msession\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mrequest\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mmethod\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0mmethod\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0murl\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0murl\u001b[0m\u001b[1;33m,\u001b[0m \u001b[1;33m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m     62\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m     63\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\requests\\sessions.py\u001b[0m in \u001b[0;36mrequest\u001b[1;34m(self, method, url, params, data, headers, cookies, files, auth, timeout, allow_redirects, proxies, hooks, stream, verify, cert, json)\u001b[0m\n\u001b[0;32m    540\u001b[0m         }\n\u001b[0;32m    541\u001b[0m         \u001b[0msend_kwargs\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mupdate\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0msettings\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 542\u001b[1;33m         \u001b[0mresp\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0msend\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mprep\u001b[0m\u001b[1;33m,\u001b[0m \u001b[1;33m**\u001b[0m\u001b[0msend_kwargs\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    543\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    544\u001b[0m         \u001b[1;32mreturn\u001b[0m \u001b[0mresp\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\requests\\sessions.py\u001b[0m in \u001b[0;36msend\u001b[1;34m(self, request, **kwargs)\u001b[0m\n\u001b[0;32m    653\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    654\u001b[0m         \u001b[1;31m# Send the request\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 655\u001b[1;33m         \u001b[0mr\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0madapter\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0msend\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mrequest\u001b[0m\u001b[1;33m,\u001b[0m \u001b[1;33m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    656\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    657\u001b[0m         \u001b[1;31m# Total elapsed time of the request (approximately)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\requests\\adapters.py\u001b[0m in \u001b[0;36msend\u001b[1;34m(self, request, stream, timeout, verify, cert, proxies)\u001b[0m\n\u001b[0;32m    514\u001b[0m                 \u001b[1;32mraise\u001b[0m \u001b[0mSSLError\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0me\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mrequest\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0mrequest\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    515\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 516\u001b[1;33m             \u001b[1;32mraise\u001b[0m \u001b[0mConnectionError\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0me\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mrequest\u001b[0m\u001b[1;33m=\u001b[0m\u001b[0mrequest\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    517\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    518\u001b[0m         \u001b[1;32mexcept\u001b[0m \u001b[0mClosedPoolError\u001b[0m \u001b[1;32mas\u001b[0m \u001b[0me\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;31mConnectionError\u001b[0m: HTTPSConnectionPool(host='xn--80az8a.xn--d1aqf.xn--p1ai', port=443): Max retries exceeded with url: /%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D1%8B/api/object/43551 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x0000023FE7468670>: Failed to establish a new connection: [WinError 10060] Попытка установить соединение была безуспешной, т.к. от другого компьютера за требуемое время не получен нужный отклик, или было разорвано уже установленное соединение из-за неверного отклика уже подключенного компьютера'))"
+     ]
+    }
+   ],
+   "source": [
+    "import pandas as pd\n",
+    "\n",
+    "df = []\n",
+    "data = pd.DataFrame()\n",
+    "\n",
+    "for i in range(0, 10527, 1000):\n",
+    "    for obj in objids[(i+1):(i+1000)]:\n",
+    "        url = f'https://xn--80az8a.xn--d1aqf.xn--p1ai/%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D1%8B/api/object/{obj}'\n",
+    "        res = requests.get(url).json()\n",
+    "        df = pd.json_normalize(res)\n",
+    "        data = data.append(df)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 73,
+   "metadata": {
+    "pycharm": {
+     "name": "#%%\n"
+    },
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>errcode</th>\n",
+       "      <th>data.id</th>\n",
+       "      <th>data.pdId</th>\n",
+       "      <th>data.developer.devId</th>\n",
+       "      <th>data.developer.devShortCleanNm</th>\n",
+       "      <th>data.developer.devShortNm</th>\n",
+       "      <th>data.developer.devFullCleanNm</th>\n",
+       "      <th>data.developer.problObjCnt</th>\n",
+       "      <th>data.developer.buildObjCnt</th>\n",
+       "      <th>data.developer.comissObjCnt</th>\n",
+       "      <th>...</th>\n",
+       "      <th>data.developer.bankruptStage.bankruptStageDesc</th>\n",
+       "      <th>data.developer.bankruptStage.bankruptLawUrl</th>\n",
+       "      <th>data.developer.orgBankruptMsgDttm</th>\n",
+       "      <th>data.metro.id</th>\n",
+       "      <th>data.metro.name</th>\n",
+       "      <th>data.metro.line</th>\n",
+       "      <th>data.metro.color</th>\n",
+       "      <th>data.metro.time</th>\n",
+       "      <th>data.metro.isWalk</th>\n",
+       "      <th>data.metro.colors</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>29679</td>\n",
+       "      <td>124647</td>\n",
+       "      <td>7424</td>\n",
+       "      <td>212-2</td>\n",
+       "      <td>212-2</td>\n",
+       "      <td>212-2</td>\n",
+       "      <td>0</td>\n",
+       "      <td>2</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>13383</td>\n",
+       "      <td>28105</td>\n",
+       "      <td>306</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>0</td>\n",
+       "      <td>5</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>13391</td>\n",
+       "      <td>28101</td>\n",
+       "      <td>306</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>0</td>\n",
+       "      <td>5</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>13397</td>\n",
+       "      <td>28141</td>\n",
+       "      <td>306</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>0</td>\n",
+       "      <td>5</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>13398</td>\n",
+       "      <td>28141</td>\n",
+       "      <td>306</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>0</td>\n",
+       "      <td>5</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>13399</td>\n",
+       "      <td>28141</td>\n",
+       "      <td>306</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>2МЕН ГРУПП</td>\n",
+       "      <td>0</td>\n",
+       "      <td>5</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>36912</td>\n",
+       "      <td>337586</td>\n",
+       "      <td>10296</td>\n",
+       "      <td>CЗ СТРОЙРЕСУРС</td>\n",
+       "      <td>CЗ СТРОЙРЕСУРС</td>\n",
+       "      <td>CПЕЦИАЛИЗИРОВАННЫЙ ЗАСТРОЙЩИК СТРОЙРЕСУРС</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>44076</td>\n",
+       "      <td>275899</td>\n",
+       "      <td>9115</td>\n",
+       "      <td>XXI ВЕК СТРОЙ</td>\n",
+       "      <td>XXI ВЕК СТРОЙ</td>\n",
+       "      <td>XXI ВЕК СТРОЙ</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>23494</td>\n",
+       "      <td>35375</td>\n",
+       "      <td>4074</td>\n",
+       "      <td>А-ЛЕКС</td>\n",
+       "      <td>А-ЛЕКС</td>\n",
+       "      <td>А-ЛЕКС</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>0</td>\n",
+       "      <td>27476</td>\n",
+       "      <td>94132</td>\n",
+       "      <td>664</td>\n",
+       "      <td>А101</td>\n",
+       "      <td>А101</td>\n",
+       "      <td>А101</td>\n",
+       "      <td>0</td>\n",
+       "      <td>1</td>\n",
+       "      <td>49</td>\n",
+       "      <td>...</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>10 rows × 109 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "  errcode  data.id  data.pdId  data.developer.devId  \\\n",
+       "0       0    29679     124647                  7424   \n",
+       "0       0    13383      28105                   306   \n",
+       "0       0    13391      28101                   306   \n",
+       "0       0    13397      28141                   306   \n",
+       "0       0    13398      28141                   306   \n",
+       "0       0    13399      28141                   306   \n",
+       "0       0    36912     337586                 10296   \n",
+       "0       0    44076     275899                  9115   \n",
+       "0       0    23494      35375                  4074   \n",
+       "0       0    27476      94132                   664   \n",
+       "\n",
+       "  data.developer.devShortCleanNm data.developer.devShortNm  \\\n",
+       "0                          212-2                     212-2   \n",
+       "0                     2МЕН ГРУПП                2МЕН ГРУПП   \n",
+       "0                     2МЕН ГРУПП                2МЕН ГРУПП   \n",
+       "0                     2МЕН ГРУПП                2МЕН ГРУПП   \n",
+       "0                     2МЕН ГРУПП                2МЕН ГРУПП   \n",
+       "0                     2МЕН ГРУПП                2МЕН ГРУПП   \n",
+       "0                 CЗ СТРОЙРЕСУРС            CЗ СТРОЙРЕСУРС   \n",
+       "0                  XXI ВЕК СТРОЙ             XXI ВЕК СТРОЙ   \n",
+       "0                         А-ЛЕКС                    А-ЛЕКС   \n",
+       "0                           А101                      А101   \n",
+       "\n",
+       "               data.developer.devFullCleanNm  data.developer.problObjCnt  \\\n",
+       "0                                      212-2                           0   \n",
+       "0                                 2МЕН ГРУПП                           0   \n",
+       "0                                 2МЕН ГРУПП                           0   \n",
+       "0                                 2МЕН ГРУПП                           0   \n",
+       "0                                 2МЕН ГРУПП                           0   \n",
+       "0                                 2МЕН ГРУПП                           0   \n",
+       "0  CПЕЦИАЛИЗИРОВАННЫЙ ЗАСТРОЙЩИК СТРОЙРЕСУРС                           0   \n",
+       "0                              XXI ВЕК СТРОЙ                           0   \n",
+       "0                                     А-ЛЕКС                           0   \n",
+       "0                                       А101                           0   \n",
+       "\n",
+       "   data.developer.buildObjCnt  data.developer.comissObjCnt  ...  \\\n",
+       "0                           2                            0  ...   \n",
+       "0                           5                            0  ...   \n",
+       "0                           5                            0  ...   \n",
+       "0                           5                            0  ...   \n",
+       "0                           5                            0  ...   \n",
+       "0                           5                            0  ...   \n",
+       "0                           1                            0  ...   \n",
+       "0                           1                            0  ...   \n",
+       "0                           1                            0  ...   \n",
+       "0                           1                           49  ...   \n",
+       "\n",
+       "  data.developer.bankruptStage.bankruptStageDesc  \\\n",
+       "0                                            NaN   \n",
+       "0                                            NaN   \n",
+       "0                                            NaN   \n",
+       "0                                            NaN   \n",
+       "0                                            NaN   \n",
+       "0                                            NaN   \n",
+       "0                                            NaN   \n",
+       "0                                            NaN   \n",
+       "0                                            NaN   \n",
+       "0                                            NaN   \n",
+       "\n",
+       "  data.developer.bankruptStage.bankruptLawUrl  \\\n",
+       "0                                         NaN   \n",
+       "0                                         NaN   \n",
+       "0                                         NaN   \n",
+       "0                                         NaN   \n",
+       "0                                         NaN   \n",
+       "0                                         NaN   \n",
+       "0                                         NaN   \n",
+       "0                                         NaN   \n",
+       "0                                         NaN   \n",
+       "0                                         NaN   \n",
+       "\n",
+       "  data.developer.orgBankruptMsgDttm data.metro.id data.metro.name  \\\n",
+       "0                               NaN           NaN             NaN   \n",
+       "0                               NaN           NaN             NaN   \n",
+       "0                               NaN           NaN             NaN   \n",
+       "0                               NaN           NaN             NaN   \n",
+       "0                               NaN           NaN             NaN   \n",
+       "0                               NaN           NaN             NaN   \n",
+       "0                               NaN           NaN             NaN   \n",
+       "0                               NaN           NaN             NaN   \n",
+       "0                               NaN           NaN             NaN   \n",
+       "0                               NaN           NaN             NaN   \n",
+       "\n",
+       "  data.metro.line data.metro.color data.metro.time data.metro.isWalk  \\\n",
+       "0             NaN              NaN             NaN               NaN   \n",
+       "0             NaN              NaN             NaN               NaN   \n",
+       "0             NaN              NaN             NaN               NaN   \n",
+       "0             NaN              NaN             NaN               NaN   \n",
+       "0             NaN              NaN             NaN               NaN   \n",
+       "0             NaN              NaN             NaN               NaN   \n",
+       "0             NaN              NaN             NaN               NaN   \n",
+       "0             NaN              NaN             NaN               NaN   \n",
+       "0             NaN              NaN             NaN               NaN   \n",
+       "0             NaN              NaN             NaN               NaN   \n",
+       "\n",
+       "   data.metro.colors  \n",
+       "0                NaN  \n",
+       "0                NaN  \n",
+       "0                NaN  \n",
+       "0                NaN  \n",
+       "0                NaN  \n",
+       "0                NaN  \n",
+       "0                NaN  \n",
+       "0                NaN  \n",
+       "0                NaN  \n",
+       "0                NaN  \n",
+       "\n",
+       "[10 rows x 109 columns]"
+      ]
+     },
+     "execution_count": 73,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.head(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(3159, 109)"
+      ]
+     },
+     "execution_count": 77,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "data.shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Сохранение pandas dataframe в excel"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 61,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data.to_excel('output.xlsx')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Сохранение pandas dataframe в pickle"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 62,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data.to_pickle('output.pkl')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Сохранение pandas dataframe в БД"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 65,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import sqlite3 as sql\n",
+    "\n",
+    "conn = sql.connect(\"test_database\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 66,
+   "metadata": {},
+   "outputs": [
+    {
+     "ename": "InterfaceError",
+     "evalue": "Error binding parameter 46 - probably unsupported type.",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[1;31mInterfaceError\u001b[0m                            Traceback (most recent call last)",
+      "\u001b[1;32m~\\AppData\\Local\\Temp/ipykernel_13600/3646574605.py\u001b[0m in \u001b[0;36m<module>\u001b[1;34m\u001b[0m\n\u001b[1;32m----> 1\u001b[1;33m \u001b[0mdata\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mto_sql\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;34m'dom_rf_objects'\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mconn\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mif_exists\u001b[0m\u001b[1;33m=\u001b[0m\u001b[1;34m'replace'\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mindex\u001b[0m\u001b[1;33m=\u001b[0m\u001b[1;32mFalse\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m      2\u001b[0m \u001b[0mconn\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mcommit\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      3\u001b[0m \u001b[0mconn\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mclose\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\pandas\\core\\generic.py\u001b[0m in \u001b[0;36mto_sql\u001b[1;34m(self, name, con, schema, if_exists, index, index_label, chunksize, dtype, method)\u001b[0m\n\u001b[0;32m   2870\u001b[0m         \u001b[1;32mfrom\u001b[0m \u001b[0mpandas\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mio\u001b[0m \u001b[1;32mimport\u001b[0m \u001b[0msql\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m   2871\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m-> 2872\u001b[1;33m         sql.to_sql(\n\u001b[0m\u001b[0;32m   2873\u001b[0m             \u001b[0mself\u001b[0m\u001b[1;33m,\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m   2874\u001b[0m             \u001b[0mname\u001b[0m\u001b[1;33m,\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\pandas\\io\\sql.py\u001b[0m in \u001b[0;36mto_sql\u001b[1;34m(frame, name, con, schema, if_exists, index, index_label, chunksize, dtype, method, engine, **engine_kwargs)\u001b[0m\n\u001b[0;32m    715\u001b[0m         )\n\u001b[0;32m    716\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 717\u001b[1;33m     pandas_sql.to_sql(\n\u001b[0m\u001b[0;32m    718\u001b[0m         \u001b[0mframe\u001b[0m\u001b[1;33m,\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    719\u001b[0m         \u001b[0mname\u001b[0m\u001b[1;33m,\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\pandas\\io\\sql.py\u001b[0m in \u001b[0;36mto_sql\u001b[1;34m(self, frame, name, if_exists, index, index_label, schema, chunksize, dtype, method, **kwargs)\u001b[0m\n\u001b[0;32m   2224\u001b[0m         )\n\u001b[0;32m   2225\u001b[0m         \u001b[0mtable\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mcreate\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m-> 2226\u001b[1;33m         \u001b[0mtable\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0minsert\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mchunksize\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mmethod\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m   2227\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m   2228\u001b[0m     \u001b[1;32mdef\u001b[0m \u001b[0mhas_table\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mname\u001b[0m\u001b[1;33m:\u001b[0m \u001b[0mstr\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mschema\u001b[0m\u001b[1;33m:\u001b[0m \u001b[0mstr\u001b[0m \u001b[1;33m|\u001b[0m \u001b[1;32mNone\u001b[0m \u001b[1;33m=\u001b[0m \u001b[1;32mNone\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\pandas\\io\\sql.py\u001b[0m in \u001b[0;36minsert\u001b[1;34m(self, chunksize, method)\u001b[0m\n\u001b[0;32m    965\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    966\u001b[0m                 \u001b[0mchunk_iter\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mzip\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m*\u001b[0m\u001b[1;33m[\u001b[0m\u001b[0marr\u001b[0m\u001b[1;33m[\u001b[0m\u001b[0mstart_i\u001b[0m\u001b[1;33m:\u001b[0m\u001b[0mend_i\u001b[0m\u001b[1;33m]\u001b[0m \u001b[1;32mfor\u001b[0m \u001b[0marr\u001b[0m \u001b[1;32min\u001b[0m \u001b[0mdata_list\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 967\u001b[1;33m                 \u001b[0mexec_insert\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mconn\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mkeys\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mchunk_iter\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    968\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    969\u001b[0m     def _query_iterator(\n",
+      "\u001b[1;32m~\\anaconda3\\lib\\site-packages\\pandas\\io\\sql.py\u001b[0m in \u001b[0;36m_execute_insert\u001b[1;34m(self, conn, keys, data_iter)\u001b[0m\n\u001b[0;32m   1922\u001b[0m     \u001b[1;32mdef\u001b[0m \u001b[0m_execute_insert\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mconn\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mkeys\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mdata_iter\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m   1923\u001b[0m         \u001b[0mdata_list\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mlist\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mdata_iter\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m-> 1924\u001b[1;33m         \u001b[0mconn\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mexecutemany\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0minsert_statement\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mnum_rows\u001b[0m\u001b[1;33m=\u001b[0m\u001b[1;36m1\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mdata_list\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m   1925\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m   1926\u001b[0m     \u001b[1;32mdef\u001b[0m \u001b[0m_execute_insert_multi\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mconn\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mkeys\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mdata_iter\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;31mInterfaceError\u001b[0m: Error binding parameter 46 - probably unsupported type."
+     ]
+    }
+   ],
+   "source": [
+    "data.to_sql('dom_rf_objects', conn, if_exists='replace', index=False)\n",
+    "conn.commit()\n",
+    "conn.close()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.7"
+  },
+  "toc": {
+   "base_numbering": 1,
+   "nav_menu": {},
+   "number_sections": true,
+   "sideBar": true,
+   "skip_h1_title": false,
+   "title_cell": "Table of Contents",
+   "title_sidebar": "Contents",
+   "toc_cell": true,
+   "toc_position": {},
+   "toc_section_display": true,
+   "toc_window_display": false
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}
